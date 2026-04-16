@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>日本東京 5D4N</title>
-    <!-- Vue 3 CDN 優先載入 -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -14,17 +12,10 @@
         .card-gradient { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
         .disney-gradient { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="pb-12">
-    <!-- 密碼驗證腳本放在 body 最開頭 -->
-    <script>
-        const password = prompt("Smile");
-        if (password !== "0419") {
-            document.body.innerHTML = "<div style='display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;'><h2>無權限訪問</h2><p>請重新整理頁面輸入正確密碼</p></div>";
-            window.stop(); // 停止後續解析
-        }
-    </script>
 
     <div id="app" class="max-w-md mx-auto min-h-screen bg-slate-50 shadow-xl relative">
         <header class="card-gradient p-6 text-white rounded-b-3xl shadow-lg relative">
@@ -40,9 +31,50 @@
             </div>
             <div class="flex items-center gap-2 text-sm opacity-90">
                 <i class="fa-solid fa-calendar-days"></i>
-                <span>2024 / 04 / 19 - 04 / 23</span>
+                <span>2026 / 04 / 19 - 04 / 23</span>
             </div>
         </header>
+
+        <!-- Travel Toolbox (Weather & Currency) -->
+        <section class="mx-4 -mt-4 bg-white rounded-2xl shadow-xl p-4 relative z-20 border border-slate-100">
+            <div class="flex items-center justify-between mb-4 border-b border-slate-50 pb-2">
+                <div class="flex items-center gap-2">
+                    <div class="bg-amber-100 text-amber-600 w-8 h-8 rounded-full flex items-center justify-center">
+                        <i class="fa-solid fa-briefcase text-xs"></i>
+                    </div>
+                    <span class="font-bold text-slate-700 text-sm">{{ lang === 'zh' ? '旅行工具箱' : 'Travel Toolbox' }}</span>
+                </div>
+                <!-- Real-time Weather -->
+                <div class="flex items-center gap-2 text-slate-600">
+                    <i :class="weather.icon" class="text-sky-500"></i>
+                    <span class="text-xs font-bold">{{ weather.temp }}°C</span>
+                    <span class="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-400">Tokyo</span>
+                </div>
+            </div>
+
+            <!-- Currency Converter -->
+            <div class="grid grid-cols-3 gap-2">
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">JPY 日圓</label>
+                    <div class="relative">
+                        <input type="number" v-model="currency.jpy" @input="convert('jpy')" class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-2 text-sm font-bold text-blue-600 focus:outline-none focus:border-blue-400">
+                    </div>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">TWD 台幣</label>
+                    <div class="relative">
+                        <input type="number" v-model="currency.twd" @input="convert('twd')" class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-2 text-sm font-bold text-slate-700 focus:outline-none focus:border-blue-400">
+                    </div>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">AUD 澳幣</label>
+                    <div class="relative">
+                        <input type="number" v-model="currency.aud" @input="convert('aud')" class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-2 text-sm font-bold text-slate-700 focus:outline-none focus:border-blue-400">
+                    </div>
+                </div>
+            </div>
+            <p class="text-[9px] text-slate-400 mt-2 text-center">* 匯率僅供參考 (JPY:TWD ≈ 1:0.21, JPY:AUD ≈ 1:0.010)</p>
+        </section>
 
         <nav class="flex overflow-x-auto no-scrollbar gap-2 px-4 mt-6 sticky top-0 bg-slate-50/90 backdrop-blur-md py-2 z-10">
             <button v-for="day in 5" :key="day" 
@@ -53,7 +85,7 @@
             </button>
         </nav>
 
-        <main class="p-4" v-if="itineraries[currentDay-1]">
+        <main class="p-4">
             <div class="mb-6">
                 <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
                     <span class="bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">
@@ -82,23 +114,39 @@
                         
                         <div v-if="item.specialLinks" class="mt-3 space-y-2">
                             <a v-for="link in item.specialLinks" :href="link.url" target="_blank" :class="[link.color || 'bg-blue-500', 'flex items-center justify-center gap-3 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all active:scale-95']">
-                                <i :class="link.icon || 'fa-solid fa-star'"></i>
+                                <i :class="link.icon || 'fa-solid fa-star-twinkle'"></i>
                                 {{ link.label[lang] }}
                                 <i class="fa-solid fa-arrow-up-right-from-square text-[10px] opacity-70"></i>
                             </a>
                         </div>
+                        <div v-else-if="item.specialLink" class="mt-3">
+                            <a :href="item.specialLink.url" target="_blank" :class="[item.specialLink.color || 'bg-blue-500', 'flex items-center justify-center gap-3 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all active:scale-95']">
+                                <i :class="item.specialLink.icon || 'fa-solid fa-star-twinkle'"></i>
+                                {{ item.specialLink.label[lang] }}
+                                <i class="fa-solid fa-arrow-up-right-from-square text-[10px] opacity-70"></i>
+                            </a>
+                        </div>
 
-                        <div v-if="item.mapUrl" class="mt-3">
+                        <div v-if="item.mapOptions" class="mt-3 space-y-2">
+                            <a v-for="opt in item.mapOptions" :href="opt.url" target="_blank" class="flex items-center justify-between bg-green-50 text-green-700 border border-green-200 px-3 py-2 rounded-xl text-xs font-bold hover:bg-green-100 transition-colors">
+                                <span class="flex items-center gap-2">
+                                    <i class="fa-solid fa-map-location-dot text-green-600"></i>
+                                    {{ opt.label[lang] }}
+                                </span>
+                                <i class="fa-solid fa-chevron-right text-[10px] opacity-50"></i>
+                            </a>
+                        </div>
+                        <div v-else-if="item.mapUrl" class="mt-3">
                             <a :href="item.mapUrl" target="_blank" class="inline-flex items-center gap-2 bg-green-50 text-green-700 border border-green-200 px-3 py-2 rounded-xl text-xs font-bold hover:bg-green-100 transition-colors">
                                 <i class="fa-solid fa-map-location-dot text-green-600"></i>
-                                {{ lang === 'zh' ? '導航至此位置' : 'Navigate' }}
+                                {{ lang === 'zh' ? '導航至此位置' : 'Navigate to Location' }}
                             </a>
                         </div>
 
                         <div v-if="item.hotelNotes" class="mt-3 pt-3 border-t border-slate-100">
                             <div class="bg-blue-50/50 p-3 rounded-xl">
                                 <h4 class="text-[10px] font-bold text-blue-700 uppercase mb-2 tracking-wider">
-                                    {{ lang === 'zh' ? '住宿設施與備註' : 'Hotel Facilities' }}
+                                    {{ lang === 'zh' ? '住宿設施與備註' : 'Hotel Facilities & Notes' }}
                                 </h4>
                                 <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-600">
                                     <div class="flex items-center gap-1"><i class="fa-solid fa-clock text-blue-400"></i> {{ item.hotelNotes.reception[lang] }}</div>
@@ -108,128 +156,184 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- D3 Disney Guide -->
-            <div v-if="currentDay === 3" class="mt-4 px-2">
-                <div class="disney-gradient p-5 rounded-3xl shadow-xl border border-purple-400/30 overflow-hidden relative">
-                    <h4 class="text-white font-bold text-base mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i>
-                        {{ lang === 'zh' ? '迪士尼快速通關攻略' : 'Disney Pass Guide' }}
-                    </h4>
-                    <div class="space-y-4">
-                        <div class="bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/20">
-                            <p class="text-purple-100 font-bold text-xs uppercase">DPA (Paid)</p>
-                            <p class="text-white text-sm font-medium">{{ lang === 'zh' ? '尊享卡 (付費)' : 'Disney Premier Access' }}</p>
+                        
+                        <div v-if="item.tips && item.tips[lang]" class="mt-3 flex gap-2 flex-wrap">
+                            <span v-for="tip in item.tips[lang]" class="bg-slate-50 text-slate-500 text-[10px] px-2 py-1 rounded-md border border-slate-100">
+                                # {{ tip }}
+                            </span>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- D3 Special Explanations -->
+            <div v-if="currentDay === 3" class="mt-4 px-2">
+                <div class="disney-gradient p-5 rounded-3xl shadow-xl border border-purple-400/30 overflow-hidden relative">
+                    <i class="fa-solid fa-wand-magic-sparkles absolute -right-4 -bottom-4 text-white/10 text-8xl rotate-12"></i>
+                    <h4 class="text-white font-bold text-base mb-4 flex items-center gap-2 relative">
+                        <i class="fa-solid fa-sparkles"></i>
+                        {{ lang === 'zh' ? '迪士尼快速通關攻略' : 'Disney Pass Guide' }}
+                    </h4>
+                    <div class="space-y-4 relative">
+                        <div class="bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-inner">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="bg-purple-200 text-purple-800 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Paid / 付費</span>
+                                <span class="text-purple-100 font-bold text-xs">DPA</span>
+                            </div>
+                            <p class="text-white text-sm font-medium mb-1">Disney Premier Access / 尊享卡</p>
+                            <p class="text-purple-100 text-[10px] leading-relaxed">
+                                {{ lang === 'zh' ? '● 費用：單次約 ¥1,500-2,500/人。\n● 優點：指定時間快速入場，幾乎不需排隊。\n● 推薦：美女與野獸、杯麵。' : '● Cost: ~¥1,500-2,500 per person/ride.\n● Pros: Fast entry at designated time, minimal wait.\n● Recs: Beauty & the Beast, Baymax.' }}
+                            </p>
+                        </div>
+                        <div class="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 shadow-inner">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="bg-indigo-200 text-indigo-800 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Free / 免費</span>
+                                <span class="text-indigo-100 font-bold text-xs">PP</span>
+                            </div>
+                            <p class="text-white text-sm font-medium mb-1">Priority Pass / 優先入場券</p>
+                            <p class="text-indigo-100 text-[10px] leading-relaxed">
+                                {{ lang === 'zh' ? '● 費用：免費（入園後由 App 限量領取）。\n● 優點：大幅縮短排隊時間（類似以前的 FP）。\n● 推薦：太空山、巨雷山、怪獸電力公司。' : '● Cost: Free (Claim via App after entry).\n● Pros: Significantly shorter wait times.\n● Recs: Space Mtn, Big Thunder Mtn, Monster Inc.' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="itineraries[currentDay-1].reminders" class="mt-4 bg-amber-50 border border-amber-100 p-4 rounded-2xl">
+                <h4 class="text-amber-800 font-bold text-sm mb-2">
+                    {{ lang === 'zh' ? '重點摘要 / Q&A' : 'Highlights / Q&A' }}
+                </h4>
+                <ul class="text-xs text-amber-700 space-y-2">
+                    <li v-for="rem in itineraries[currentDay-1].reminders[lang]" class="flex gap-2 leading-normal">
+                        <span>•</span> {{ rem }}
+                    </li>
+                </ul>
+            </div>
         </main>
     </div>
 
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script>
-        const { createApp, ref } = Vue;
+        const { createApp, ref, onMounted, reactive } = Vue;
 
         createApp({
             setup() {
-                const currentDay = ref(1);
+                const currentDay = ref(3);
                 const lang = ref('zh');
+                const weather = reactive({ temp: '20', icon: 'fa-solid fa-sun' });
+                const currency = reactive({ jpy: 1000, twd: 210, aud: 10 });
+                const rates = { jpyToTwd: 0.21, jpyToAud: 0.010 };
 
                 const toggleLang = () => {
                     lang.value = lang.value === 'zh' ? 'en' : 'zh';
                 };
 
+                const convert = (source) => {
+                    if (source === 'jpy') {
+                        currency.twd = Math.round(currency.jpy * rates.jpyToTwd);
+                        currency.aud = (currency.jpy * rates.jpyToAud).toFixed(2);
+                    } else if (source === 'twd') {
+                        currency.jpy = Math.round(currency.twd / rates.jpyToTwd);
+                        currency.aud = (currency.jpy * rates.jpyToAud).toFixed(2);
+                    } else if (source === 'aud') {
+                        currency.jpy = Math.round(currency.aud / rates.jpyToAud);
+                        currency.twd = Math.round(currency.jpy * rates.jpyToTwd);
+                    }
+                };
+
+                const fetchWeather = async () => {
+                    try {
+                        const apiKey = ""; // Environment provides key
+                        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                contents: [{ parts: [{ text: "Get the current temperature in Tokyo, Japan in Celsius. Return ONLY the number." }] }]
+                            })
+                        });
+                        const data = await res.json();
+                        const temp = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+                        if (temp && !isNaN(temp)) {
+                            weather.temp = temp;
+                            weather.icon = parseInt(temp) > 25 ? 'fa-solid fa-sun' : 'fa-solid fa-cloud-sun';
+                        }
+                    } catch (e) { console.error("Weather update failed"); }
+                };
+
+                onMounted(() => {
+                    fetchWeather();
+                    convert('jpy');
+                });
+
                 const itineraries = [
                     {
                         date: '2024/04/19',
-                        title: { zh: '抵達東京', en: 'Arrival Tokyo' },
-                        subtitle: { zh: '成田機場 → 飯店', en: 'NRT → Hotel' },
+                        title: { zh: '抵達東京 (虎航 IT700)', en: 'Arrive Tokyo (Tigerair IT700)' },
+                        subtitle: { zh: '成田 NRT T2 → Hotel Abest 銀座京橋', en: 'NRT T2 → Hotel Abest Ginza Kyobashi' },
+                        reminders: {
+                            zh: ['ICOCA 可以用嗎？ 可以！Access特急是普通電車，直接刷卡進閘。', '需要預訂嗎？ 不需要！隨到隨搭，只需支付基本車資。', '準備好 Visit Japan Web 的入境 QR Code。'],
+                            en: ['Can I use ICOCA? Yes! Access Express is a regular train, just tap in.', 'Need reservation? No! Ride anytime, pay only base fare.', 'Prepare Visit Japan Web QR Code.']
+                        },
                         events: [
-                            { 
-                                time: { zh: '14:00', en: '14:00' }, 
-                                location: { zh: 'Hotel Abest Ginza Kyobashi', en: 'Hotel Abest Ginza Kyobashi' }, 
-                                icon: 'fa-solid fa-hotel', 
-                                desc: { zh: '辦理入住或行李寄存。', en: 'Check-in or luggage drop-off.' },
-                                hotelNotes: {
-                                    reception: { zh: '24小時櫃台', en: '24h Front Desk' },
-                                    luggage: { zh: '行李寄存', en: 'Luggage Storage' },
-                                    wifi: { zh: '客房 Wi-Fi', en: 'Room Wi-Fi' },
-                                    check: { zh: '15:00 入住', en: '15:00 Check-in' }
-                                }
-                            }
+                            { time: { zh: '🛬 入境', en: '🛬 Arrival' }, location: { zh: '成田機場 T2', en: 'Narita Airport T2' }, icon: 'fa-solid fa-plane-arrival', desc: { zh: 'Step 1 | 跟著「京成線」指示走 \n下到 B1F 找到 京成第二航廈站。', en: 'Step 1 | Follow "Keisei Line" signs \nGo down to B1F for Keisei Terminal 2 Station.' } },
+                            { time: { zh: '💳 票務', en: '💳 Tickets' }, location: { zh: '京成第二航廈站 (B1F)', en: 'Keisei T2 Station (B1F)' }, icon: 'fa-solid fa-credit-card', desc: { zh: 'Step 2 | 確認 ICOCA 餘額 \n需有 ¥1,330 以上，直接刷卡進閘，無需買票。', en: 'Step 2 | Check ICOCA Balance \nNeed at least ¥1,330. Tap in directly.' } },
+                            { time: { zh: '🚆 搭車', en: '🚆 Boarding' }, location: { zh: 'アクセス特急 (Access Express)', en: 'Access Express' }, icon: 'fa-solid fa-train', mapUrl: 'https://www.google.com/maps/dir/?api=1&origin=Narita+Airport+Terminal+2&destination=Hotel+Abest+Ginza+Kyobashi&travelmode=transit', desc: { zh: 'Step 3 | 找「アクセス特急 押上・羽田空港方向」\n⚠️ 注意：不是 Skyliner。\n\nStep 4 | 車程約 80 分鐘 \n全程不換車，直通都營淺草線。', en: 'Step 3 | Look for "Access Express bound for Oshiage/Haneda"\n⚠️ Note: NOT the Skyliner.\n\nStep 4 | ~80 min ride \nNo transfers needed, direct to Asakusa Line.' } },
+                            { time: { zh: '🚇 到站', en: '🚇 Station' }, location: { zh: '京橋站 (Kyobashi)', en: 'Kyobashi Station' }, icon: 'fa-solid fa-location-dot', desc: { zh: 'Step 5 | 下車出閘 \n刷 ICOCA 出站，往 A4 出口方向。', en: 'Step 5 | Tap Out \nUse ICOCA, head to Exit A4.' } },
+                            { time: { zh: '🚶 步行', en: '🚶 Walk' }, location: { zh: 'Hotel Abest Ginza Kyobashi', en: 'Hotel Abest Ginza Kyobashi' }, icon: 'fa-solid fa-hotel', desc: { zh: 'Step 6 | 步行約 2 分鐘 \n沿京橋通直走，飯店就在右手邊。', en: 'Step 6 | 2-min Walk \nWalk straight on Kyobashi-dori, hotel is on the right.' }, hotelNotes: { reception: { zh: '24小時櫃台', en: '24h Front Desk' }, luggage: { zh: '行李寄存', en: 'Luggage Storage' }, wifi: { zh: '客房 Wi-Fi', en: 'Room Wi-Fi' }, check: { zh: '15:00-02:00 / 10:00前', en: 'In 15:00+ / Out 10:00' } } }
                         ]
                     },
                     {
                         date: '2024/04/20',
                         title: { zh: '富士山一日遊', en: 'Mt. Fuji Tour' },
-                        subtitle: { zh: '自然與風景之旅', en: 'Nature & Scenery' },
+                        subtitle: { zh: '山中湖、忍野八海、芝櫻祭與河口湖', en: 'Yamanakako, Oshino Hakkai & Moss Phlox' },
+                        reminders: {
+                            zh: ['山中湖平野之濱是拍「逆富士」的最佳地點，無風時最美。', '忍野八海必吃現烤草餅與泉水豆腐。', '大石公園自然生活館伴手禮非常齊全，建議最後採買。'],
+                            en: ['Hirano-no-hama is the best spot for "Reverse Fuji".', 'Try Kusa-mochi & Spring Water Tofu at Oshino Hakkai.', 'Oishi Park is the best place for Fuji-themed souvenirs.']
+                        },
                         events: [
-                            { 
-                                time: { zh: '08:00', en: '08:00' }, 
-                                location: { zh: '河口湖大石公園', en: 'Oishi Park' }, 
-                                icon: 'fa-solid fa-mountain', 
-                                mapUrl: 'https://www.google.com/maps/search/?api=1&query=Oishi+Park',
-                                desc: { zh: '欣賞富士山與湖景。', en: 'Enjoy Mt. Fuji and lake views.' } 
-                            }
+                            { time: { zh: '07:30', en: '07:30' }, location: { zh: '飯店集合', en: 'Hotel Meeting' }, icon: 'fa-solid fa-bus', desc: { zh: '7:30 集合，8點準時出發。\n預計前往山中湖車程：2小時30分鐘。', en: '7:30 Assembly, 8:00 Depart.\nDrive to Yamanakako: 2h 30m.' } },
+                            { time: { zh: '10:30', en: '10:30' }, location: { zh: '山中湖 白鳥濱', en: 'Yamanakako Shiratorihama' }, icon: 'fa-solid fa-mountain', mapUrl: 'https://www.google.com/maps/dir/?api=1&origin=Hotel+Abest+Ginza+Kyobashi&destination=Hirano+Beach+Yamanakako', desc: { zh: '停留時間：40分鐘。\n🔸逆富士：湖水平靜時機率極高。\n🔸天鵝同框：運氣好可拍到天鵝與山景。\n預計前往下站車程：20分鐘。', en: 'Stay: 40 mins.\nFuji photo spot with swans.\nDrive to next: 20 mins.' }, tips: { zh: ['攝影聖地', '逆富士'], en: ['Photo Spot', 'Reverse Fuji'] } },
+                            { time: { zh: '11:30', en: '11:30' }, location: { zh: '忍野八海 (午餐)', en: 'Oshino Hakkai (Lunch)' }, icon: 'fa-solid fa-water', mapUrl: 'https://www.google.com/maps/dir/?api=1&origin=Hirano+Beach+Yamanakako&destination=Oshino+Hakkai', desc: { zh: '停留時間：1小時。\n🔸必吃：現烤草餅、泉水豆腐、洗過的草莓。\n🔸神泉：可自帶瓶子裝富士山泉水。\n🔸伴手禮： 這裡的醃漬物、乾香菇和泉水拉麵非常出名。 \n預計前往下站車程：50分鐘。', en: 'Stay: 1 hour.\n🔸Must-try: Kusa-mochi, tofu, fresh strawberries.\n🔸Springs: Bring a bottle for Fuji water.\n🔸Souvenirs: Pickled goods, dried mushrooms, Ramen.' }, tips: { zh: ['現烤草餅', '富士神泉'], en: ['Kusa-mochi', 'Holy Spring'] } },
+                            { time: { zh: '13:20', en: '13:20' }, location: { zh: '本栖湖 芝櫻祭', en: 'Fuji Shibazakura Festival' }, icon: 'fa-solid fa-clover', mapUrl: 'https://www.google.com/maps/dir/?api=1&origin=Oshino+Hakkai&destination=Fuji+Motosuko+Resort', desc: { zh: '停留時間：1小時。\n整片粉紅花海與富士山同框。\n🔸拍照點：迷你富士山造景、彼得兔花園。 \n🔸甜點：現場有櫻花祭美食節。 \n預計前往下站車程：40分鐘。', en: 'Stay: 1 hour.\nPink moss phlox fields with Fuji.\n🔸Spots: Mini Fuji, Peter Rabbit Garden.\n🔸Snacks: Seasonal Shibazakura food festival.' }, tips: { zh: ['粉紅花海', '芝櫻'], en: ['Pink Sea', 'Shibazakura'] } },
+                            { time: { zh: '15:00', en: '15:00' }, location: { zh: '河口湖 大石公園', en: 'Oishi Park, Kawaguchiko' }, icon: 'fa-solid fa-camera-retro', mapUrl: 'https://www.google.com/maps/dir/?api=1&origin=Fuji+Motosuko+Resort&destination=Oishi+Park', desc: { zh: '停留時間：1小時。\n山、湖、花三位一體的最佳位置。\n🔸大採購：自然生活館伴手禮天堂。\n🔸必吃：藍莓或信玄餅霜淇淋。 \n預計返回市區車程：2小時。', en: 'Stay: 1 hour.\nBest view of Mountain, Lake, and Flowers.\n🔸Shopping: Natural Living Center for souvenirs.\n🔸Eats: Blueberry or Shingen Mochi Soft Serve.' }, tips: { zh: ['伴手禮天堂', '藍莓霜淇淋'], en: ['Souvenir Heaven', 'Ice Cream'] } },
+                            { time: { zh: '18:00', en: '18:00' }, location: { zh: '抵達東京市區', en: 'Arrive Tokyo City' }, icon: 'fa-solid fa-car-side', desc: { zh: '結束富士山之旅，回到飯店休息。', en: 'End of Fuji tour, back to city.' } }
                         ]
                     },
                     {
                         date: '2024/04/21',
-                        title: { zh: '迪士尼樂園', en: 'Disneyland' },
-                        subtitle: { zh: '夢想與魔法的王國', en: 'Kingdom of Dreams' },
+                        title: { zh: '迪士尼樂園之旅', en: 'Disney Adventure' },
+                        subtitle: { zh: '夢想與魔法的王國：Land', en: 'Kingdom of Dreams & Magic: Land' },
+                        reminders: {
+                            zh: ['隨機應變：體力好走八丁堀(直達)，想少走路走寶町(需轉乘)。', '強烈建議入園前下載官方 App，用於抽預約等候卡或購買 DPA。', '目前不提供紙本地圖，手機電量需充足（建議帶行動電源）。'],
+                            en: ['Flexible Choice: Hatchobori (Direct) or Takaracho (Transfer).', 'Download official App before entry for DPA/Standby Pass.', 'No paper maps provided, keep your phone charged!']
+                        },
                         events: [
-                            { 
-                                time: { zh: '08:30', en: '08:30' }, 
-                                location: { zh: '舞濱站', en: 'Maihama Station' }, 
-                                icon: 'fa-solid fa-castle', 
-                                desc: { zh: '準備入園。', en: 'Prepare for entry.' } 
-                            }
+                            { time: { zh: '07:30', en: '07:30' }, location: { zh: '飯店出發 (彈性路線)', en: 'Depart from Hotel (Flexible)' }, icon: 'fa-solid fa-person-walking-luggage', mapOptions: [{ label: { zh: '方案 A：八丁堀直達 (最快)', en: 'Plan A: Hatchobori Direct' }, url: 'https://www.google.com/maps/dir/?api=1&origin=Hotel+Abest+Ginza+Kyobashi&destination=Maihama+Station&travelmode=transit' }, { label: { zh: '方案 B：寶町站出發 (步程短)', en: 'Plan B: Takaracho Station' }, url: 'https://www.google.com/maps/dir/?api=1&origin=Hotel+Abest+Ginza+Kyobashi&destination=Maihama+Station&waypoints=Takaracho+Station&travelmode=transit' }], desc: { zh: '【方案 A：步行+直達】\n🚶 步行 12 分鐘至「八丁堀站」\n🚆 搭乘 JR 京葉線直達「舞濱站」。(車程約 30 分)\n\n【方案 B：寶町轉乘 (當天應變)】\n🚶 步行 2 分鐘至「寶町站」\n🚇 搭都營淺草線至「新橋」\n🚆 轉乘 JR 山手線至「東京」再轉「京葉線」。(車程約 35-40 分)', en: '【Plan A: Walk + Direct】\n🚶 12-min walk to Hatchobori Stn\n🚆 JR Keiyo Line direct to Maihama. (~30 min)\n\n【Plan B: Short Walk (Transfer)】\n🚶 2-min walk to Takaracho Stn\n🚇 Asakusa Line to Shimbashi\n🚆 Transfer to JR Tokyo then Keiyo Line to Maihama.' } },
+                            { time: { zh: '08:30', en: '08:30' }, location: { zh: '迪士尼樂園入園', en: 'Tokyo Disneyland Entry' }, icon: 'fa-solid fa-castle', desc: { zh: '通過安檢入園。第一件事：\n1. 購買「美女與野獸」DPA (快速通關)\n2. 抽其他設施的 40 週年優先入場券 (PP)。\n3.線上訂購園內餐點。', en: 'Pass security & enter. First priorities:\n1. Buy DPA for "Beauty and the Beast".\n2. Get 40th Anniv. Priority Pass (PP) on App.\n3. Order park food online via App.' } },
+                            { time: { zh: '09:00 - 20:00', en: '09:00 - 20:00' }, location: { zh: '暢玩遊樂設施', en: 'Attractions & Shows' }, icon: 'fa-solid fa-hat-wizard', specialLink: { label: { zh: '迪士尼官網：即時排隊狀況', en: 'TDR Official: Wait Times' }, url: 'https://www.tokyodisneyresort.jp/tc/index.html' }, desc: { zh: '🔸必玩：美女與野獸、杯麵歡樂乘車遊、飛濺山。\n🔸遊行：日間「隱形英雄」與夜間「電子大遊行」。\n🔸拍照：灰姑娘城堡前。', en: '🔸Must-ride: Beauty & the Beast, Baymax, Splash Mtn.\n🔸Parade: Daytime & Nighttime Electrical Parade.\n🔸Photo: Cinderella Castle.' } },
+                            { time: { zh: '12:00', en: '12:00' }, location: { zh: '迪士尼美食時間', en: 'Disney Dining' }, icon: 'fa-solid fa-utensils', desc: { zh: '🔸必吃：米奇手套刈包、三眼怪麻糬、各式口味爆米花。\n🔸晚餐推薦：紅心女王宴會大廳。', en: '🔸Must-eat: Mickey Glove Bun, Alien Mochi, flavored Popcorn.\n🔸Dinner: Queen of Hearts Banquet Hall.' } },
+                            { time: { zh: '20:30', en: '20:30' }, location: { zh: '煙火與回程', en: 'Fireworks & Return' }, icon: 'fa-solid fa-fireworks', mapUrl: 'https://www.google.com/maps/dir/?api=1&origin=Maihama+Station&destination=Hotel+Abest+Ginza+Kyobashi&travelmode=transit', desc: { zh: '欣賞完煙火後，搭乘 JR 返回八丁堀站或有樂町站，回飯店休息。', en: 'Watch fireworks, take JR back to Hatchobori or Yurakucho, then back to hotel.' } }
                         ]
                     },
                     {
                         date: '2024/04/22',
-                        title: { zh: '淺草與下町文化', en: 'Asakusa & Culture' },
-                        subtitle: { zh: '和服體驗與美食', en: 'Kimono & Cuisine' },
+                        title: { zh: '淺草與下町 culture', en: 'Asakusa & Culture' },
+                        subtitle: { zh: '和服體驗、淺草寺、晴空塔', en: 'Kimono, Senso-ji & Skytree' },
                         events: [
-                            { 
-                                time: { zh: '11:00', en: '11:00' }, 
-                                location: { zh: '淺草月見和服', en: 'Tsukimi Kimono Asakusa' }, 
-                                icon: 'fa-solid fa-shirt', 
-                                mapUrl: 'https://www.google.com/maps/dir/?api=1&origin=Hotel+Abest+Ginza+Kyobashi&destination=Tsukimi+Kimono+Asakusa',
-                                specialLinks: [
-                                    {
-                                        label: { zh: '到店路線 (IG 影片)', en: 'Route to Store (IG Reel)' },
-                                        url: 'https://www.instagram.com/reel/C9kHgLohzqk/',
-                                        color: 'bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500',
-                                        icon: 'fa-brands fa-instagram'
-                                    }
-                                ],
-                                desc: { 
-                                    zh: '👘 體驗細節：\n● 蕾絲和服方案\n● 男士和服方案\n● 30分鐘攝影', 
-                                    en: '👘 Details:\n● Lace Kimono\n● Mens Kimono\n● 30-min Photo' 
-                                }
-                            }
+                            { time: { zh: '11:00', en: '11:00' }, location: { zh: '淺草月見和服 (和服租借)', en: 'Tsukimi Kimono Asakusa' }, icon: 'fa-solid fa-kimono', mapUrl: 'https://www.google.com/maps/dir/?api=1&origin=Hotel+Abest+Ginza+Kyobashi&destination=Tsukimi+Kimono+Asakusa+1-5-2+Hanakawado+Taito+City+Tokyo&travelmode=transit', specialLinks: [{ label: { zh: '到店路線 (IG 影片)', en: 'Route to Store (IG)' }, url: 'https://www.instagram.com/reel/C9kHgLohzqk/', color: 'bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500', icon: 'fa-brands fa-instagram' }], desc: { zh: '👘 體驗方案明細：\n● 女士蕾絲和服方案(含髮型) 8,000 日圓\n● 男士普通和服方案 5,000 日圓\n● 30分鐘攝影方案 12,000 日圓\n💰 總計費用：25,000 日圓 (含稅)', en: '👘 Kimono Rental Details:\n● Lace Kimono (inc. hair): 8,000 JPY\n● Mens Kimono: 5,000 JPY\n● 30-min Photo: 12,000 JPY' } },
+                            { time: { zh: '13:00', en: '13:00' }, location: { zh: '淺草寺', en: 'Senso-ji Temple' }, icon: 'fa-solid fa-torii-gate', desc: { zh: '穿著和服在雷門、仲見世通漫步拍照。', en: 'Walk around Kaminarimon in Kimono.' } },
+                            { time: { zh: '19:00', en: '19:00' }, location: { zh: '澀谷', en: 'Shibuya: Wagyu Yakiniku DAIDOKOYA' }, icon: 'fa-solid fa-fire-burner', mapUrl: 'https://www.google.com/maps/dir/?api=1&origin=Hotel+Abest+Ginza+Kyobashi&destination=Wagyu+Yakiniku+DAIDOKOYA+SHIBUYA&travelmode=transit', desc: { zh: 'Wagyu Yakiniku DAIDOKOYA\n🍖 澀谷美味和牛燒肉行程。', en: '🍖 Premium Wagyu Yakiniku in Shibuya.' } }
                         ]
                     },
                     {
                         date: '2024/04/23',
-                        title: { zh: '回程', en: 'Departure' },
-                        subtitle: { zh: '前往機場', en: 'Heading to NRT' },
-                        events: [
-                            { 
-                                time: { zh: '10:00', en: '10:00' }, 
-                                location: { zh: '飯店退房', en: 'Hotel Check-out' }, 
-                                icon: 'fa-solid fa-door-open', 
-                                desc: { zh: '結束精彩旅程。', en: 'End of journey.' } 
-                            }
-                        ]
+                        title: { zh: '自由活動與回程', en: 'Free Time & Return' },
+                        subtitle: { zh: '10:00 退房', en: '10:00 Check-out' },
+                        events: [{ time: { zh: '10:00', en: '10:00' }, location: { zh: '飯店退房', en: 'Hotel Check-out' }, icon: 'fa-solid fa-door-open', desc: { zh: '自由活動後前往機場。', en: 'Free time then head to airport.' } }]
                     }
                 ];
 
-                return { currentDay, lang, toggleLang, itineraries };
+                return { currentDay, lang, toggleLang, itineraries, weather, currency, convert };
             }
         }).mount('#app');
     </script>
