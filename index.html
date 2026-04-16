@@ -46,9 +46,15 @@
                 </div>
                 <!-- Real-time Weather -->
                 <div class="flex items-center gap-2 text-slate-600">
-                    <i :class="weather.icon" class="text-sky-500"></i>
-                    <span class="text-xs font-bold">{{ weather.temp }}°C</span>
-                    <span class="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-400">Tokyo</span>
+                    <div v-if="weatherLoading" class="animate-pulse flex items-center gap-1">
+                        <div class="w-3 h-3 bg-slate-200 rounded-full"></div>
+                        <span class="text-[10px] text-slate-400">Loading...</span>
+                    </div>
+                    <div v-else class="flex items-center gap-2">
+                        <i :class="weather.icon" class="text-sky-500"></i>
+                        <span class="text-xs font-bold">{{ weather.temp }}°C</span>
+                        <span class="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-400">Tokyo</span>
+                    </div>
                 </div>
             </div>
 
@@ -218,9 +224,10 @@
 
         createApp({
             setup() {
-                const currentDay = ref(3);
+                const currentDay = ref(1);
                 const lang = ref('zh');
-                const weather = reactive({ temp: '20', icon: 'fa-solid fa-sun' });
+                const weatherLoading = ref(true);
+                const weather = reactive({ temp: '18', icon: 'fa-solid fa-cloud-sun' });
                 const currency = reactive({ jpy: 1000, twd: 210, aud: 10 });
                 const rates = { jpyToTwd: 0.21, jpyToAud: 0.010 };
 
@@ -242,8 +249,9 @@
                 };
 
                 const fetchWeather = async () => {
+                    weatherLoading.value = true;
                     try {
-                        const apiKey = ""; // Environment provides key
+                        const apiKey = ""; // Runtime provides key
                         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -255,9 +263,16 @@
                         const temp = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
                         if (temp && !isNaN(temp)) {
                             weather.temp = temp;
-                            weather.icon = parseInt(temp) > 25 ? 'fa-solid fa-sun' : 'fa-solid fa-cloud-sun';
+                            const t = parseInt(temp);
+                            if (t > 25) weather.icon = 'fa-solid fa-sun';
+                            else if (t > 15) weather.icon = 'fa-solid fa-cloud-sun';
+                            else weather.icon = 'fa-solid fa-cloud';
                         }
-                    } catch (e) { console.error("Weather update failed"); }
+                    } catch (e) { 
+                        console.error("Weather update failed"); 
+                    } finally {
+                        weatherLoading.value = false;
+                    }
                 };
 
                 onMounted(() => {
@@ -267,7 +282,7 @@
 
                 const itineraries = [
                     {
-                        date: '2024/04/19',
+                        date: '2026/04/19',
                         title: { zh: '抵達東京 (虎航 IT700)', en: 'Arrive Tokyo (Tigerair IT700)' },
                         subtitle: { zh: '成田 NRT T2 → Hotel Abest 銀座京橋', en: 'NRT T2 → Hotel Abest Ginza Kyobashi' },
                         reminders: {
@@ -283,7 +298,7 @@
                         ]
                     },
                     {
-                        date: '2024/04/20',
+                        date: '2026/04/20',
                         title: { zh: '富士山一日遊', en: 'Mt. Fuji Tour' },
                         subtitle: { zh: '山中湖、忍野八海、芝櫻祭與河口湖', en: 'Yamanakako, Oshino Hakkai & Moss Phlox' },
                         reminders: {
@@ -300,7 +315,7 @@
                         ]
                     },
                     {
-                        date: '2024/04/21',
+                        date: '2026/04/21',
                         title: { zh: '迪士尼樂園之旅', en: 'Disney Adventure' },
                         subtitle: { zh: '夢想與魔法的王國：Land', en: 'Kingdom of Dreams & Magic: Land' },
                         reminders: {
@@ -316,7 +331,7 @@
                         ]
                     },
                     {
-                        date: '2024/04/22',
+                        date: '2026/04/22',
                         title: { zh: '淺草與下町 culture', en: 'Asakusa & Culture' },
                         subtitle: { zh: '和服體驗、淺草寺、晴空塔', en: 'Kimono, Senso-ji & Skytree' },
                         events: [
@@ -326,14 +341,14 @@
                         ]
                     },
                     {
-                        date: '2024/04/23',
+                        date: '2026/04/23',
                         title: { zh: '自由活動與回程', en: 'Free Time & Return' },
                         subtitle: { zh: '10:00 退房', en: '10:00 Check-out' },
                         events: [{ time: { zh: '10:00', en: '10:00' }, location: { zh: '飯店退房', en: 'Hotel Check-out' }, icon: 'fa-solid fa-door-open', desc: { zh: '自由活動後前往機場。', en: 'Free time then head to airport.' } }]
                     }
                 ];
 
-                return { currentDay, lang, toggleLang, itineraries, weather, currency, convert };
+                return { currentDay, lang, toggleLang, itineraries, weatherLoading, weather, currency, convert };
             }
         }).mount('#app');
     </script>
