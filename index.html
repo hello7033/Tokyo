@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日本東京 5D4N</title>
+    <!-- Vue 3 CDN 優先載入 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; }
+        .card-gradient { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .disney-gradient { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="pb-12">
+    <!-- 密碼驗證腳本放在 body 最開頭 -->
+    <script>
+        const password = prompt("Smile");
+        if (password !== "0419") {
+            document.body.innerHTML = "<div style='display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;'><h2>無權限訪問</h2><p>請重新整理頁面輸入正確密碼</p></div>";
+            window.stop(); // 停止後續解析
+        }
+    </script>
+
+    <div id="app" class="max-w-md mx-auto min-h-screen bg-slate-50 shadow-xl relative">
+        <header class="card-gradient p-6 text-white rounded-b-3xl shadow-lg relative">
+            <!-- Language Switcher -->
+            <button @click="toggleLang" class="absolute top-6 right-6 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-xs flex items-center gap-1 backdrop-blur-md transition-all border border-white/30">
+                <i class="fa-solid fa-globe"></i>
+                {{ lang === 'zh' ? 'English' : '繁體中文' }}
+            </button>
+
+            <div class="flex justify-between items-center mb-4">
+                <h1 class="text-2xl font-bold tracking-tight">Tokyo <span class="text-blue-200 text-lg">5D4N</span></h1>
+                <i class="fa-solid fa-plane-departure text-xl opacity-80"></i>
+            </div>
+            <div class="flex items-center gap-2 text-sm opacity-90">
+                <i class="fa-solid fa-calendar-days"></i>
+                <span>2024 / 04 / 19 - 04 / 23</span>
+            </div>
+        </header>
+
+        <nav class="flex overflow-x-auto no-scrollbar gap-2 px-4 mt-6 sticky top-0 bg-slate-50/90 backdrop-blur-md py-2 z-10">
+            <button v-for="day in 5" :key="day" 
+                @click="currentDay = day"
+                :class="['px-6 py-2 rounded-full font-bold transition-all flex-shrink-0 text-sm shadow-sm', 
+                         currentDay === day ? 'bg-blue-600 text-white' : 'bg-white text-slate-500']">
+                D{{ day }}
+            </button>
+        </nav>
+
+        <main class="p-4" v-if="itineraries[currentDay-1]">
+            <div class="mb-6">
+                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <span class="bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">
+                        {{ itineraries[currentDay-1].date.split('/')[2] }}
+                    </span>
+                    {{ itineraries[currentDay-1].title[lang] }}
+                </h2>
+                <p class="text-slate-500 text-sm mt-1 ml-10">{{ itineraries[currentDay-1].subtitle[lang] }}</p>
+            </div>
+
+            <div class="relative ml-4 border-l-2 border-dashed border-blue-200 pl-8 pb-4">
+                <div v-for="(item, index) in itineraries[currentDay-1].events" :key="index" class="mb-8 relative">
+                    <div class="absolute -left-[39.5px] top-1 w-5 h-5 bg-white border-4 border-blue-500 rounded-full shadow-sm"></div>
+                    
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-xs font-bold text-blue-600 tracking-widest uppercase">{{ item.time[lang] }}</span>
+                        <input type="checkbox" class="w-5 h-5 rounded accent-blue-600">
+                    </div>
+                    
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                        <h3 class="font-bold text-slate-800 mb-1 flex items-center gap-2">
+                            <i :class="item.icon" class="text-blue-500 text-sm"></i>
+                            {{ item.location[lang] }}
+                        </h3>
+                        <p class="text-sm text-slate-600 leading-relaxed whitespace-pre-line">{{ item.desc[lang] }}</p>
+                        
+                        <div v-if="item.specialLinks" class="mt-3 space-y-2">
+                            <a v-for="link in item.specialLinks" :href="link.url" target="_blank" :class="[link.color || 'bg-blue-500', 'flex items-center justify-center gap-3 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all active:scale-95']">
+                                <i :class="link.icon || 'fa-solid fa-star'"></i>
+                                {{ link.label[lang] }}
+                                <i class="fa-solid fa-arrow-up-right-from-square text-[10px] opacity-70"></i>
+                            </a>
+                        </div>
+
+                        <div v-if="item.mapUrl" class="mt-3">
+                            <a :href="item.mapUrl" target="_blank" class="inline-flex items-center gap-2 bg-green-50 text-green-700 border border-green-200 px-3 py-2 rounded-xl text-xs font-bold hover:bg-green-100 transition-colors">
+                                <i class="fa-solid fa-map-location-dot text-green-600"></i>
+                                {{ lang === 'zh' ? '導航至此位置' : 'Navigate' }}
+                            </a>
+                        </div>
+
+                        <div v-if="item.hotelNotes" class="mt-3 pt-3 border-t border-slate-100">
+                            <div class="bg-blue-50/50 p-3 rounded-xl">
+                                <h4 class="text-[10px] font-bold text-blue-700 uppercase mb-2 tracking-wider">
+                                    {{ lang === 'zh' ? '住宿設施與備註' : 'Hotel Facilities' }}
+                                </h4>
+                                <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-600">
+                                    <div class="flex items-center gap-1"><i class="fa-solid fa-clock text-blue-400"></i> {{ item.hotelNotes.reception[lang] }}</div>
+                                    <div class="flex items-center gap-1"><i class="fa-solid fa-suitcase-rolling text-blue-400"></i> {{ item.hotelNotes.luggage[lang] }}</div>
+                                    <div class="flex items-center gap-1"><i class="fa-solid fa-wifi text-blue-400"></i> {{ item.hotelNotes.wifi[lang] }}</div>
+                                    <div class="flex items-center gap-1"><i class="fa-solid fa-key text-blue-400"></i> {{ item.hotelNotes.check[lang] }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- D3 Disney Guide -->
+            <div v-if="currentDay === 3" class="mt-4 px-2">
+                <div class="disney-gradient p-5 rounded-3xl shadow-xl border border-purple-400/30 overflow-hidden relative">
+                    <h4 class="text-white font-bold text-base mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        {{ lang === 'zh' ? '迪士尼快速通關攻略' : 'Disney Pass Guide' }}
+                    </h4>
+                    <div class="space-y-4">
+                        <div class="bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/20">
+                            <p class="text-purple-100 font-bold text-xs uppercase">DPA (Paid)</p>
+                            <p class="text-white text-sm font-medium">{{ lang === 'zh' ? '尊享卡 (付費)' : 'Disney Premier Access' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const { createApp, ref } = Vue;
+
+        createApp({
+            setup() {
+                const currentDay = ref(1);
+                const lang = ref('zh');
+
+                const toggleLang = () => {
+                    lang.value = lang.value === 'zh' ? 'en' : 'zh';
+                };
+
+                const itineraries = [
+                    {
+                        date: '2024/04/19',
+                        title: { zh: '抵達東京', en: 'Arrival Tokyo' },
+                        subtitle: { zh: '成田機場 → 飯店', en: 'NRT → Hotel' },
+                        events: [
+                            { 
+                                time: { zh: '14:00', en: '14:00' }, 
+                                location: { zh: 'Hotel Abest Ginza Kyobashi', en: 'Hotel Abest Ginza Kyobashi' }, 
+                                icon: 'fa-solid fa-hotel', 
+                                desc: { zh: '辦理入住或行李寄存。', en: 'Check-in or luggage drop-off.' },
+                                hotelNotes: {
+                                    reception: { zh: '24小時櫃台', en: '24h Front Desk' },
+                                    luggage: { zh: '行李寄存', en: 'Luggage Storage' },
+                                    wifi: { zh: '客房 Wi-Fi', en: 'Room Wi-Fi' },
+                                    check: { zh: '15:00 入住', en: '15:00 Check-in' }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        date: '2024/04/20',
+                        title: { zh: '富士山一日遊', en: 'Mt. Fuji Tour' },
+                        subtitle: { zh: '自然與風景之旅', en: 'Nature & Scenery' },
+                        events: [
+                            { 
+                                time: { zh: '08:00', en: '08:00' }, 
+                                location: { zh: '河口湖大石公園', en: 'Oishi Park' }, 
+                                icon: 'fa-solid fa-mountain', 
+                                mapUrl: 'https://www.google.com/maps/search/?api=1&query=Oishi+Park',
+                                desc: { zh: '欣賞富士山與湖景。', en: 'Enjoy Mt. Fuji and lake views.' } 
+                            }
+                        ]
+                    },
+                    {
+                        date: '2024/04/21',
+                        title: { zh: '迪士尼樂園', en: 'Disneyland' },
+                        subtitle: { zh: '夢想與魔法的王國', en: 'Kingdom of Dreams' },
+                        events: [
+                            { 
+                                time: { zh: '08:30', en: '08:30' }, 
+                                location: { zh: '舞濱站', en: 'Maihama Station' }, 
+                                icon: 'fa-solid fa-castle', 
+                                desc: { zh: '準備入園。', en: 'Prepare for entry.' } 
+                            }
+                        ]
+                    },
+                    {
+                        date: '2024/04/22',
+                        title: { zh: '淺草與下町文化', en: 'Asakusa & Culture' },
+                        subtitle: { zh: '和服體驗與美食', en: 'Kimono & Cuisine' },
+                        events: [
+                            { 
+                                time: { zh: '11:00', en: '11:00' }, 
+                                location: { zh: '淺草月見和服', en: 'Tsukimi Kimono Asakusa' }, 
+                                icon: 'fa-solid fa-shirt', 
+                                mapUrl: 'https://www.google.com/maps/dir/?api=1&origin=Hotel+Abest+Ginza+Kyobashi&destination=Tsukimi+Kimono+Asakusa',
+                                specialLinks: [
+                                    {
+                                        label: { zh: '到店路線 (IG 影片)', en: 'Route to Store (IG Reel)' },
+                                        url: 'https://www.instagram.com/reel/C9kHgLohzqk/',
+                                        color: 'bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500',
+                                        icon: 'fa-brands fa-instagram'
+                                    }
+                                ],
+                                desc: { 
+                                    zh: '👘 體驗細節：\n● 蕾絲和服方案\n● 男士和服方案\n● 30分鐘攝影', 
+                                    en: '👘 Details:\n● Lace Kimono\n● Mens Kimono\n● 30-min Photo' 
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        date: '2024/04/23',
+                        title: { zh: '回程', en: 'Departure' },
+                        subtitle: { zh: '前往機場', en: 'Heading to NRT' },
+                        events: [
+                            { 
+                                time: { zh: '10:00', en: '10:00' }, 
+                                location: { zh: '飯店退房', en: 'Hotel Check-out' }, 
+                                icon: 'fa-solid fa-door-open', 
+                                desc: { zh: '結束精彩旅程。', en: 'End of journey.' } 
+                            }
+                        ]
+                    }
+                ];
+
+                return { currentDay, lang, toggleLang, itineraries };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
